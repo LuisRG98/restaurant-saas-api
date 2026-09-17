@@ -4,8 +4,6 @@ from app.api.restaurants import router as restaurants_router
 from app.core.exceptions import AppException
 
 
-
-
 app = FastAPI(
     title="Restaurant Management API",
     description="Backend API for restaurant management",

@@ -70,9 +70,15 @@ class RestaurantService:
         for field, value in update_data.items():
             setattr(restaurant, field, value)
 
-        return self.repository.update(restaurant)
-    
+        try:
+            return self.repository.update(restaurant)
 
+        except IntegrityError:
+            raise ConflictException(
+                "A restaurant with this name already exists"
+            )
+        
+        
     def delete_restaurant(
         self,
         restaurant_id: int,
