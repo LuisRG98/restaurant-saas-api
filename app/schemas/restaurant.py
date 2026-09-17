@@ -1,6 +1,12 @@
 from pydantic import BaseModel, Field
 
 
+class RestaurantBase(BaseModel):
+    name: str
+    address: str
+    phone: str
+
+    
 class RestaurantCreate(BaseModel):
     name: str = Field(
         min_length=3,

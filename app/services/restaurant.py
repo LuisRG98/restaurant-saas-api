@@ -1,7 +1,5 @@
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import RestaurantNotFoundError
-from app.core.exceptions import RestaurantAlreadyExistsError
 from app.models.restaurant import Restaurant
 from app.repositories.restaurant import RestaurantRepository
 from app.schemas.restaurant import RestaurantCreate, RestaurantUpdate
@@ -16,13 +14,6 @@ class RestaurantService:
         self,
         data: RestaurantCreate
     ) -> Restaurant:
-
-        existing = self.repository.get_by_name(data.name)
-
-        if existing:
-            raise RestaurantAlreadyExistsError(
-                f"Restaurant '{data.name}' already exists"
-            )
 
         restaurant = Restaurant(
             name=data.name,

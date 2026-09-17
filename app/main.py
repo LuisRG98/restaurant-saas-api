@@ -1,15 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from app.api.restaurants import router as restaurants_router
+from app.core.exceptions import AppException
 
 
-from app.core.exceptions import (
-    RestaurantAlreadyExistsError,
-    RestaurantNotFoundError,
-)
-from app.core.exception_handlers import (
-    restaurant_already_exists_handler,
-    restaurant_not_found_handler,
-)
+
 
 app = FastAPI(
     title="Restaurant Management API",
@@ -17,16 +12,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
-
-app.add_exception_handler(
-    RestaurantNotFoundError,
-    restaurant_not_found_handler,
-)
-
-app.add_exception_handler(
-    RestaurantAlreadyExistsError,
-    restaurant_already_exists_handler,
-)
+@app.exception_handler(AppException)
+async def app_exception_handler(
+    request: Request,
+    exc: AppException,
+):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": exc.message,
+        },
+    )
 
 app.include_router(restaurants_router)
 

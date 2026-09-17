@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -15,31 +15,22 @@ router = APIRouter(
     tags=["Restaurants"],
 )
 
-@router.get("/")
+@router.get(
+        "/",
+        response_model=list[RestaurantResponse],
+    )
 def get_restaurants(
     db: Session = Depends(get_db),
 ):
-    return {
-        "message": "Database session received"
-    }
+    service = RestaurantService(db)
 
-
-@router.get("/database-check")
-def database_check(
-    db: Session = Depends(get_db),
-):
-    result = db.execute(text("SELECT 1"))
-
-    return {
-        "database": "connected",
-        "result": result.scalar(),
-    }
+    return service.get_all()
 
 
 @router.post(
     "/",
     response_model=RestaurantResponse,
-    status_code=201,
+    status_code=status.HTTP_201_CREATED,
 )
 def create_restaurant(
     data: RestaurantCreate,
