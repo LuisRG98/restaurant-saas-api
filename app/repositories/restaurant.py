@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.models.restaurant import Restaurant
 
@@ -10,11 +11,16 @@ class RestaurantRepository:
         self.db = db
 
     def create(self, restaurant: Restaurant) -> Restaurant:
-        self.db.add(restaurant)
-        self.db.commit()
-        self.db.refresh(restaurant)
+        try:
+            self.db.add(restaurant)
+            self.db.commit()
+            self.db.refresh(restaurant)
 
-        return restaurant
+            return restaurant
+
+        except Exception:
+            self.db.rollback()
+            raise
 
     def get_by_id(
         self,
@@ -39,11 +45,20 @@ class RestaurantRepository:
         
 
     def update(self, restaurant: Restaurant) -> Restaurant:
-        self.db.commit()
-        self.db.refresh(restaurant)
+        try:
+            self.db.commit()
+            self.db.refresh(restaurant)
 
-        return restaurant
+            return restaurant
+
+        except Exception:
+            self.db.rollback()
+            raise
 
     def delete(self, restaurant: Restaurant) -> None:
-        self.db.delete(restaurant)
-        self.db.commit()
+        try:
+            self.db.delete(restaurant)
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise

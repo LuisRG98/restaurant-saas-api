@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.schemas.restaurant import (
     RestaurantCreate,
     RestaurantResponse,
+    RestaurantUpdate
 )
 from app.services.restaurant import RestaurantService
 
@@ -53,4 +54,36 @@ def get_restaurant(
 
     service = RestaurantService(db)
 
-    return service.get_by_id(restaurant_id)
+    return service.get_restaurant(restaurant_id)
+
+
+@router.patch(
+    "/{restaurant_id}",
+    response_model=RestaurantResponse,
+)
+def update_restaurant(
+    restaurant_id: int,
+    restaurant_data: RestaurantUpdate,
+    db: Session = Depends(get_db),
+):
+    service = RestaurantService(db)
+
+    return service.update_restaurant(
+        restaurant_id,
+        restaurant_data,
+    )
+
+
+@router.delete(
+    "/{restaurant_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_restaurant(
+    restaurant_id: int,
+    db: Session = Depends(get_db),
+):
+    service = RestaurantService(db)
+
+    service.delete_restaurant(restaurant_id)
+
+    return None
