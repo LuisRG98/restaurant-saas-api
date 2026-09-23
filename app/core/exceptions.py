@@ -30,3 +30,29 @@ class ConflictException(AppException):
             message=message,
             status_code=409,
         )
+
+
+class UnauthorizedException(AppException):
+    """Raised when authentication fails."""
+
+    def __init__(
+        self,
+        message: str = "Invalid credentials",
+    ):
+        super().__init__(
+            message=message,
+            status_code=401,
+        )
+
+
+class ForbiddenException(AppException):
+    """Raised when an authenticated user lacks permission."""
+
+    def __init__(
+        self,
+        message: str = "You do not have permission to perform this action",
+    ):
+        super().__init__(
+            message=message,
+            status_code=403,
+        )

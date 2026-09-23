@@ -1,8 +1,14 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from app.models.user import User
 
-from app.core.database import get_db
+
+from app.core.database import get_db 
+from app.core.dependencies import (
+    get_current_user,
+    require_role
+)
+
 from app.schemas.restaurant import (
     RestaurantCreate,
     RestaurantResponse,
@@ -22,6 +28,7 @@ router = APIRouter(
     )
 def get_restaurants(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     service = RestaurantService(db)
 
@@ -34,8 +41,11 @@ def get_restaurants(
     status_code=status.HTTP_201_CREATED,
 )
 def create_restaurant(
-    data: RestaurantCreate,
+    restaurant_data: RestaurantCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role("ADMIN", "MANAGER")
+    ),
 ):
 
     service = RestaurantService(db)
@@ -65,6 +75,9 @@ def update_restaurant(
     restaurant_id: int,
     restaurant_data: RestaurantUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role("ADMIN", "MANAGER")
+    ),
 ):
     service = RestaurantService(db)
 
@@ -81,6 +94,9 @@ def update_restaurant(
 def delete_restaurant(
     restaurant_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role("ADMIN")
+    ),
 ):
     service = RestaurantService(db)
 
