@@ -75,7 +75,7 @@ def test_staff_can_get_restaurants(
     )
 
     response = client.get(
-        "/restaurants/",
+        "/api/v1/restaurants/",
         headers=auth_headers(token),
     )
 
@@ -97,7 +97,7 @@ def test_staff_cannot_create_restaurant(
     )
 
     response = client.post(
-        "/restaurants/",
+        "/api/v1/restaurants/",
         headers=auth_headers(token),
         json={
             "name": "Staff Restaurant",
@@ -126,7 +126,7 @@ def test_staff_cannot_update_restaurant(
     )
 
     response = client.patch(
-        f"/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{restaurant.id}",
         headers=auth_headers(token),
         json={
             "name": "Updated by Staff",
@@ -153,7 +153,7 @@ def test_staff_cannot_delete_restaurant(
     )
 
     response = client.delete(
-        f"/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{restaurant.id}",
         headers=auth_headers(token),
     )
 
@@ -181,7 +181,7 @@ def test_manager_can_create_restaurant(
     )
 
     response = client.post(
-        "/restaurants/",
+        "/api/v1/restaurants/",
         headers=auth_headers(token),
         json={
             "name": "Manager Restaurant",
@@ -220,7 +220,7 @@ def test_manager_can_update_restaurant(
     )
 
     response = client.patch(
-        f"/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{restaurant.id}",
         headers=auth_headers(token),
         json={
             "name": "Updated by Manager",
@@ -257,7 +257,7 @@ def test_manager_cannot_delete_restaurant(
     )
 
     response = client.delete(
-        f"/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{restaurant.id}",
         headers=auth_headers(token),
     )
 
@@ -285,7 +285,7 @@ def test_admin_can_create_restaurant(
     )
 
     response = client.post(
-        "/restaurants/",
+        "/api/v1/restaurants/",
         headers=auth_headers(token),
         json={
             "name": "Admin Restaurant",
@@ -320,7 +320,7 @@ def test_admin_can_update_restaurant(
     )
 
     response = client.patch(
-        f"/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{restaurant.id}",
         headers=auth_headers(token),
         json={
             "name": "Updated by Admin",
@@ -353,7 +353,7 @@ def test_admin_can_delete_restaurant(
     )
 
     response = client.delete(
-        f"/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{restaurant.id}",
         headers=auth_headers(token),
     )
 

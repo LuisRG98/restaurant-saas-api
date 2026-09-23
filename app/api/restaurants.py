@@ -50,7 +50,7 @@ def create_restaurant(
 
     service = RestaurantService(db)
 
-    return service.create(data)
+    return service.create(restaurant_data)
 
 
 @router.get(
