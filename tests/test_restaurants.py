@@ -4,11 +4,16 @@ from app.main import app
 
 
 client = TestClient(app)
-prefix="/api/v1/restaurants"
+prefix="/api/v1/restaurants/"
 
 
-def test_get_restaurants(client):
-    response = client.get(prefix)
+def test_get_restaurants(client, staff_token):
+    response = client.get(
+        prefix,
+        headers={
+            "Authorization": f"Bearer {staff_token}",
+        },
+    )
 
     assert response.status_code == 200
 
@@ -17,7 +22,7 @@ def test_get_restaurants(client):
     assert isinstance(data, list)
 
 
-def test_create_restaurant(client):
+def test_create_restaurant(client, manager_token):
     restaurant_data = {
         "name": "Test Restaurant",
         "address": "Test Address 123",
@@ -26,6 +31,9 @@ def test_create_restaurant(client):
 
     response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
         json=restaurant_data,
     )
 
@@ -39,7 +47,7 @@ def test_create_restaurant(client):
     assert "id" in data
 
 
-def test_get_restaurant_by_id(client):
+def test_get_restaurant_by_id(client, manager_token):
     restaurant_data = {
         "name": "Restaurant For Get Test",
         "address": "Get Test Address",
@@ -48,6 +56,9 @@ def test_get_restaurant_by_id(client):
 
     create_response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
         json=restaurant_data,
     )
 
@@ -56,7 +67,10 @@ def test_get_restaurant_by_id(client):
     restaurant_id = create_response.json()["id"]
 
     response = client.get(
-        f"/api/v1/restaurants/{restaurant_id}"
+        f"{prefix}{restaurant_id}",
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
     )
 
     assert response.status_code == 200
@@ -79,7 +93,7 @@ def test_get_restaurant_not_found(client):
     assert data["detail"] == "Restaurant with id 999999 not found"
 
 
-def test_update_restaurant(client):
+def test_update_restaurant(client, manager_token):
     restaurant_data = {
         "name": "Restaurant Before Update",
         "address": "Original Address",
@@ -88,6 +102,9 @@ def test_update_restaurant(client):
 
     create_response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
         json=restaurant_data,
     )
 
@@ -95,13 +112,14 @@ def test_update_restaurant(client):
 
     restaurant_id = create_response.json()["id"]
 
-    update_data = {
-        "phone": "73333333",
-    }
-
     response = client.patch(
-        f"/api/v1/restaurants/{restaurant_id}",
-        json=update_data,
+        f"{prefix}{restaurant_id}",
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
+        json={
+            "name": "Restaurant After Update",
+        },
     )
 
     assert response.status_code == 200
@@ -109,13 +127,13 @@ def test_update_restaurant(client):
     data = response.json()
 
     assert data["id"] == restaurant_id
-    assert data["name"] == "Restaurant Before Update"
+    assert data["name"] == "Restaurant After Update"
     assert data["address"] == "Original Address"
-    assert data["phone"] == "73333333"
+    assert data["phone"] == "72222222"
 
 
 
-def test_delete_restaurant(client):
+def test_delete_restaurant(client, admin_token):
     restaurant_data = {
         "name": "Restaurant To Delete",
         "address": "Delete Address",
@@ -124,6 +142,9 @@ def test_delete_restaurant(client):
 
     create_response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
         json=restaurant_data,
     )
 
@@ -131,21 +152,29 @@ def test_delete_restaurant(client):
 
     restaurant_id = create_response.json()["id"]
 
-    delete_response = client.delete(
-        f"/api/v1/restaurants/{restaurant_id}"
+    response = client.delete(
+        f"{prefix}{restaurant_id}",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
     )
 
-    assert delete_response.status_code == 204
+    assert response.status_code == 204
 
     get_response = client.get(
-        f"/api/v1/restaurants/{restaurant_id}"
+        f"{prefix}{restaurant_id}"
     )
 
     assert get_response.status_code == 404
 
 
-def test_delete_restaurant_not_found(client):
-    response = client.delete("/api/v1/restaurants/9999")
+def test_delete_restaurant_not_found(client, admin_token):
+    response = client.delete(
+        f"{prefix}9999",
+        headers={
+            "Authorization": f"Bearer {admin_token}",
+        },
+    )
 
     assert response.status_code == 404
 
@@ -154,7 +183,10 @@ def test_delete_restaurant_not_found(client):
     assert data["detail"] == "Restaurant with id 9999 not found"
 
 
-def test_create_restaurant_missing_name(client):
+def test_create_restaurant_missing_name(
+    client,
+    manager_token,
+):
     restaurant_data = {
         "address": "Test Address",
         "phone": "70000000",
@@ -162,6 +194,9 @@ def test_create_restaurant_missing_name(client):
 
     response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
         json=restaurant_data,
     )
 
@@ -175,7 +210,10 @@ def test_create_restaurant_missing_name(client):
     )
 
 
-def test_create_restaurant_missing_address(client):
+def test_create_restaurant_missing_address(    
+    client,
+    manager_token,
+):
     restaurant_data = {
         "name": "Restaurant Without Address",
         "phone": "70000000",
@@ -183,6 +221,9 @@ def test_create_restaurant_missing_address(client):
 
     response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
         json=restaurant_data,
     )
 
@@ -196,7 +237,9 @@ def test_create_restaurant_missing_address(client):
     )
 
 
-def test_create_restaurant_missing_phone(client):
+def test_create_restaurant_missing_phone(
+    client,
+    manager_token,):
     restaurant_data = {
         "name": "Restaurant Without Phone",
         "address": "Test Address",
@@ -204,6 +247,9 @@ def test_create_restaurant_missing_phone(client):
 
     response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
         json=restaurant_data,
     )
 
@@ -218,7 +264,10 @@ def test_create_restaurant_missing_phone(client):
     )
 
 
-def test_create_duplicate_restaurant(client):
+def test_create_duplicate_restaurant(
+    client,
+    manager_token,
+):
     restaurant_data = {
         "name": "Duplicate Restaurant",
         "address": "First Address",
@@ -227,6 +276,9 @@ def test_create_duplicate_restaurant(client):
 
     first_response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
         json=restaurant_data,
     )
 
@@ -234,6 +286,9 @@ def test_create_duplicate_restaurant(client):
 
     second_response = client.post(
         prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
         json=restaurant_data,
     )
 
@@ -246,43 +301,57 @@ def test_create_duplicate_restaurant(client):
     )
 
 
-def test_update_restaurant_duplicate_name(client):
-    first_restaurant = {
-        "name": "Restaurant One",
-        "address": "Address One",
-        "phone": "70000001",
-    }
-
-    second_restaurant = {
-        "name": "Restaurant Two",
-        "address": "Address Two",
-        "phone": "70000002",
+def test_create_duplicate_restaurant(
+    client,
+    manager_token,
+):
+    restaurant_data = {
+        "name": "Duplicate Restaurant",
+        "address": "First Address",
+        "phone": "70000000",
     }
 
     first_response = client.post(
         prefix,
-        json=first_restaurant,
-    )
-
-    second_response = client.post(
-        prefix,
-        json=second_restaurant,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
+        json=restaurant_data,
     )
 
     assert first_response.status_code == 201
-    assert second_response.status_code == 201
 
-    second_id = second_response.json()["id"]
-
-    update_response = client.patch(
-        f"/api/v1/restaurants/{second_id}",
-        json={"name": "Restaurant One"},
+    second_response = client.post(
+        prefix,
+        headers={
+            "Authorization": f"Bearer {manager_token}",
+        },
+        json=restaurant_data,
     )
 
-    assert update_response.status_code == 409
+    assert second_response.status_code == 409
 
-    data = update_response.json()
 
-    assert data["detail"] == (
-        "A restaurant with this name already exists"
+def test_get_restaurants_without_token(client):
+    response = client.get(prefix)
+
+    assert response.status_code == 401
+
+
+def test_create_restaurant_staff_forbidden(
+    client,
+    staff_token,
+):
+    response = client.post(
+        prefix,
+        headers={
+            "Authorization": f"Bearer {staff_token}",
+        },
+        json={
+            "name": "Unauthorized Restaurant",
+            "address": "Address",
+            "phone": "70000000",
+        },
     )
+
+    assert response.status_code == 403

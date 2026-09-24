@@ -6,6 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.core.database import Base, get_db
 
+from app.models.user import User
+
 
 TEST_DATABASE_URL = (
     "postgresql+psycopg://"
@@ -61,3 +63,94 @@ def client(db):
         yield test_client
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def staff_token(client):
+    response = client.post(
+        "/auth/register",
+        json={
+            "email": "staff@test.com",
+            "password": "Password123",
+        },
+    )
+
+    assert response.status_code == 201
+
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "staff@test.com",
+            "password": "Password123",
+        },
+    )
+
+    assert response.status_code == 200
+
+    return response.json()["access_token"]
+
+
+@pytest.fixture
+def manager_token(client, db):
+    response = client.post(
+        "/auth/register",
+        json={
+            "email": "manager@test.com",
+            "password": "Password123",
+        },
+    )
+
+    assert response.status_code == 201
+
+    user_id = response.json()["id"]
+
+    user = db.get(User, user_id)
+    assert user is not None
+
+    user.role = "MANAGER"
+    db.commit()
+
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "manager@test.com",
+            "password": "Password123",
+        },
+    )
+
+    assert response.status_code == 200
+
+    return response.json()["access_token"]
+
+
+@pytest.fixture
+def admin_token(client, db):
+    response = client.post(
+        "/auth/register",
+        json={
+            "email": "admin@test.com",
+            "password": "Password123",
+        },
+    )
+
+    assert response.status_code == 201
+
+    user_id = response.json()["id"]
+
+    user = db.get(User, user_id)
+    assert user is not None
+
+    user.role = "ADMIN"
+    db.commit()
+
+    response = client.post(
+        "/auth/login",
+        json={
+            "email": "admin@test.com",
+            "password": "Password123",
+        },
+    )
+
+    assert response.status_code == 200
+
+    return response.json()["access_token"]

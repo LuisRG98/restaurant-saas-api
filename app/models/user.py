@@ -1,6 +1,11 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    String,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -30,6 +35,12 @@ class User(Base):
         String(50),
         nullable=False,
         default="STAFF",
+    )
+
+    restaurant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("restaurants.id"),
+        nullable=True,
+        index=True,
     )
 
     is_active: Mapped[bool] = mapped_column(
