@@ -1,11 +1,11 @@
 import pytest
+
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.core.database import Base, get_db
-
 from app.models.user import User
 
 
@@ -91,7 +91,7 @@ def staff_token(client):
 
 
 @pytest.fixture
-def manager_token(client, db):
+def manager_user(client, db):
     response = client.post(
         "/auth/register",
         json={
@@ -105,10 +105,13 @@ def manager_token(client, db):
     user_id = response.json()["id"]
 
     user = db.get(User, user_id)
+
     assert user is not None
 
     user.role = "MANAGER"
+
     db.commit()
+    db.refresh(user)
 
     response = client.post(
         "/auth/login",
@@ -120,11 +123,13 @@ def manager_token(client, db):
 
     assert response.status_code == 200
 
-    return response.json()["access_token"]
+    token = response.json()["access_token"]
+
+    return user, token
 
 
 @pytest.fixture
-def admin_token(client, db):
+def admin_user(client, db):
     response = client.post(
         "/auth/register",
         json={
@@ -138,10 +143,13 @@ def admin_token(client, db):
     user_id = response.json()["id"]
 
     user = db.get(User, user_id)
+
     assert user is not None
 
     user.role = "ADMIN"
+
     db.commit()
+    db.refresh(user)
 
     response = client.post(
         "/auth/login",
@@ -153,4 +161,38 @@ def admin_token(client, db):
 
     assert response.status_code == 200
 
-    return response.json()["access_token"]
+    token = response.json()["access_token"]
+
+    return user, token
+
+
+@pytest.fixture
+def manager_token(manager_user):
+    _, token = manager_user
+
+    return token
+
+
+@pytest.fixture
+def admin_token(admin_user):
+    _, token = admin_user
+
+    return token
+
+
+@pytest.fixture
+def assign_restaurant_to_user(db):
+    def _assign(
+        user_id: int,
+        restaurant_id: int,
+    ):
+        user = db.get(User, user_id)
+
+        assert user is not None
+
+        user.restaurant_id = restaurant_id
+
+        db.commit()
+        db.refresh(user)
+
+    return _assign

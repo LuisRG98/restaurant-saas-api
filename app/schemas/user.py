@@ -4,6 +4,9 @@ from pydantic import BaseModel, EmailStr
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
+    restaurant_name: str
+    restaurant_address: str
+    restaurant_phone: str
 
 
 class UserResponse(BaseModel):

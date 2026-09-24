@@ -38,7 +38,10 @@ class User(Base):
     )
 
     restaurant_id: Mapped[int | None] = mapped_column(
-        ForeignKey("restaurants.id"),
+        ForeignKey(
+            "restaurants.id",
+            ondelete="SET NULL",
+        ),
         nullable=True,
         index=True,
     )

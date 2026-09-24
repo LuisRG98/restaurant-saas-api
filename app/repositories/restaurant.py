@@ -9,21 +9,22 @@ class RestaurantRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, restaurant: Restaurant) -> Restaurant:
-        try:
-            self.db.add(restaurant)
-            self.db.commit()
-            self.db.refresh(restaurant)
+    def create(
+        self,
+        restaurant: Restaurant,
+    ) -> Restaurant:
 
-            return restaurant
+        self.db.add(restaurant)
+        self.db.flush()
+        self.db.refresh(restaurant)
 
-        except Exception:
-            self.db.rollback()
-            raise
+        return restaurant
+
+        
 
     def get_by_id(
         self,
-        restaurant_id: int
+        restaurant_id: int,
     ) -> Restaurant | None:
 
         statement = (
@@ -40,24 +41,22 @@ class RestaurantRepository:
             .order_by(Restaurant.id)
         )
 
-        return list(self.db.scalars(statement).all())
-        
+        return list(
+            self.db.scalars(statement).all()
+        )
 
-    def update(self, restaurant: Restaurant) -> Restaurant:
-        try:
-            self.db.commit()
-            self.db.refresh(restaurant)
+    def update(
+        self,
+        restaurant: Restaurant,
+    ) -> Restaurant:
 
-            return restaurant
+        self.db.flush()
+        return restaurant
 
-        except Exception:
-            self.db.rollback()
-            raise
+    def delete(
+        self,
+        restaurant: Restaurant,
+    ) -> None:
 
-    def delete(self, restaurant: Restaurant) -> None:
-        try:
-            self.db.delete(restaurant)
-            self.db.commit()
-        except Exception:
-            self.db.rollback()
-            raise
+        self.db.delete(restaurant)
+        self.db.flush()

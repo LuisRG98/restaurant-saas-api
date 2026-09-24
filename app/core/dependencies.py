@@ -66,8 +66,7 @@ def require_role(
     ) -> User:
 
         if current_user.role not in allowed_roles:
-            if current_user.role not in allowed_roles:
-                raise ForbiddenException()
+            raise ForbiddenException()
 
         return current_user
 

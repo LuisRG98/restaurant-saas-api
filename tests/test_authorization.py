@@ -59,6 +59,16 @@ def create_restaurant(db):
 
     return restaurant
 
+def assign_restaurant(db, user_id: int, restaurant_id: int):
+    user = db.get(User, user_id)
+
+    assert user is not None
+
+    user.restaurant_id = restaurant_id
+
+    db.commit()
+    db.refresh(user)
+
 
 def test_staff_can_get_restaurants(
     client,
@@ -214,6 +224,12 @@ def test_manager_can_update_restaurant(
 
     restaurant = create_restaurant(db)
 
+    assign_restaurant(
+        db,
+        user["id"],
+        restaurant.id,
+    )
+
     token = login_user(
         client,
         "manager-update@example.com",
@@ -314,6 +330,12 @@ def test_admin_can_update_restaurant(
 
     restaurant = create_restaurant(db)
 
+    assign_restaurant(
+        db,
+        user["id"],
+        restaurant.id,
+    )
+
     token = login_user(
         client,
         "admin-update@example.com",
@@ -346,6 +368,12 @@ def test_admin_can_delete_restaurant(
     )
 
     restaurant = create_restaurant(db)
+
+    assign_restaurant(
+        db,
+        user["id"],
+        restaurant.id,
+    )
 
     token = login_user(
         client,

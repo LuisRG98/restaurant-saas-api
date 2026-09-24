@@ -1,21 +1,28 @@
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from app.core.exceptions import ConflictException
+from sqlalchemy.orm import Session
 
+from app.core.exceptions import (
+    ConflictException,
+    NotFoundException,
+)
 from app.models.restaurant import Restaurant
+from app.models.user import User
 from app.repositories.restaurant import RestaurantRepository
-from app.core.exceptions import NotFoundException
-from app.schemas.restaurant import RestaurantCreate, RestaurantUpdate
+from app.schemas.restaurant import (
+    RestaurantCreate,
+    RestaurantUpdate,
+)
 
 
 class RestaurantService:
 
     def __init__(self, db: Session):
+        self.db = db
         self.repository = RestaurantRepository(db)
 
     def create(
         self,
-        data: RestaurantCreate
+        data: RestaurantCreate,
     ) -> Restaurant:
 
         restaurant = Restaurant(
@@ -25,9 +32,16 @@ class RestaurantService:
         )
 
         try:
-            return self.repository.create(restaurant)
+            restaurant = self.repository.create(restaurant)
+
+            self.db.commit()
+            self.db.refresh(restaurant)
+
+            return restaurant
 
         except IntegrityError:
+            self.db.rollback()
+
             raise ConflictException(
                 "A restaurant with this name already exists"
             )
@@ -35,9 +49,17 @@ class RestaurantService:
     def get_restaurant(
         self,
         restaurant_id: int,
+        current_user: User,
     ) -> Restaurant:
 
-        restaurant = self.repository.get_by_id(restaurant_id)
+        if current_user.restaurant_id != restaurant_id:
+            raise NotFoundException(
+                f"Restaurant with id {restaurant_id} not found"
+            )
+
+        restaurant = self.repository.get_by_id(
+            restaurant_id
+        )
 
         if restaurant is None:
             raise NotFoundException(
@@ -46,17 +68,38 @@ class RestaurantService:
 
         return restaurant
 
-    def get_all(self) -> list[Restaurant]:
+    def get_all(
+        self,
+        current_user: User,
+    ) -> list[Restaurant]:
 
-        return self.repository.get_all()
-    
+        if current_user.restaurant_id is None:
+            return []
+
+        restaurant = self.repository.get_by_id(
+            current_user.restaurant_id
+        )
+
+        if restaurant is None:
+            return []
+
+        return [restaurant]
+
     def update_restaurant(
         self,
         restaurant_id: int,
         restaurant_data: RestaurantUpdate,
+        current_user: User,
     ) -> Restaurant:
 
-        restaurant = self.repository.get_by_id(restaurant_id)
+        if current_user.restaurant_id != restaurant_id:
+            raise NotFoundException(
+                f"Restaurant with id {restaurant_id} not found"
+            )
+
+        restaurant = self.repository.get_by_id(
+            restaurant_id
+        )
 
         if restaurant is None:
             raise NotFoundException(
@@ -71,24 +114,47 @@ class RestaurantService:
             setattr(restaurant, field, value)
 
         try:
-            return self.repository.update(restaurant)
+            restaurant = self.repository.update(
+                restaurant
+            )
+
+            self.db.commit()
+            self.db.refresh(restaurant)
+
+            return restaurant
 
         except IntegrityError:
+            self.db.rollback()
+
             raise ConflictException(
                 "A restaurant with this name already exists"
             )
-        
-        
+
     def delete_restaurant(
         self,
         restaurant_id: int,
+        current_user: User,
     ) -> None:
 
-        restaurant = self.repository.get_by_id(restaurant_id)
+        if current_user.restaurant_id != restaurant_id:
+            raise NotFoundException(
+                f"Restaurant with id {restaurant_id} not found"
+            )
+
+        restaurant = self.repository.get_by_id(
+            restaurant_id
+        )
 
         if restaurant is None:
             raise NotFoundException(
                 f"Restaurant with id {restaurant_id} not found"
             )
 
-        self.repository.delete(restaurant)
+        try:
+            self.repository.delete(restaurant)
+
+            self.db.commit()
+
+        except Exception:
+            self.db.rollback()
+            raise
