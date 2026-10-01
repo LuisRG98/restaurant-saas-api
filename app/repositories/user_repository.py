@@ -39,3 +39,20 @@ class UserRepository:
         self.db.flush()
 
         return user
+    
+    def get_all_by_restaurant(
+        self,
+        restaurant_id: int,
+    ) -> list[User]:
+
+        statement = (
+            select(User)
+            .where(
+                User.restaurant_id == restaurant_id
+            )
+            .order_by(User.id)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )

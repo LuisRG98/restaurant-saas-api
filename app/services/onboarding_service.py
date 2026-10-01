@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictException
@@ -12,8 +13,14 @@ class OnboardingService:
 
     def __init__(self, db: Session):
         self.db = db
-        self.restaurant_repository = RestaurantRepository(db)
-        self.user_repository = UserRepository(db)
+
+        self.restaurant_repository = (
+            RestaurantRepository(db)
+        )
+
+        self.user_repository = (
+            UserRepository(db)
+        )
 
     def register_restaurant_admin(
         self,
@@ -24,7 +31,9 @@ class OnboardingService:
         restaurant_phone: str,
     ) -> User:
 
-        existing_user = self.user_repository.get_by_email(email)
+        existing_user = (
+            self.user_repository.get_by_email(email)
+        )
 
         if existing_user is not None:
             raise ConflictException(
@@ -38,10 +47,17 @@ class OnboardingService:
         )
 
         try:
-            restaurant = self.restaurant_repository.create(
-                restaurant
+            # 1. Create restaurant
+            restaurant = (
+                self.restaurant_repository.create(
+                    restaurant
+                )
             )
 
+            # flush() generates restaurant.id
+            # without committing the transaction.
+
+            # 2. Create ADMIN user
             user = User(
                 email=email,
                 password_hash=hash_password(password),
@@ -50,7 +66,22 @@ class OnboardingService:
                 is_active=True,
             )
 
-            return self.user_repository.create(user)
+            user = self.user_repository.create(user)
+
+            # 3. Everything succeeded
+            self.db.commit()
+
+            # 4. Refresh objects from database
+            self.db.refresh(user)
+
+            return user
+
+        except IntegrityError:
+            self.db.rollback()
+
+            raise ConflictException(
+                "Unable to create the restaurant and user"
+            )
 
         except Exception:
             self.db.rollback()

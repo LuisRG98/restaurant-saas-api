@@ -66,16 +66,30 @@ def client(db):
 
 
 @pytest.fixture
-def staff_token(client):
+def staff_token(client, db):
     response = client.post(
         "/auth/register",
         json={
             "email": "staff@test.com",
             "password": "Password123",
+            "restaurant_name": "Staff Test Restaurant",
+            "restaurant_address": "Staff Test Address",
+            "restaurant_phone": "70000001",
         },
     )
 
     assert response.status_code == 201
+
+    user_id = response.json()["id"]
+
+    user = db.get(User, user_id)
+
+    assert user is not None
+
+    user.role = "STAFF"
+
+    db.commit()
+    db.refresh(user)
 
     response = client.post(
         "/auth/login",
@@ -97,6 +111,9 @@ def manager_user(client, db):
         json={
             "email": "manager@test.com",
             "password": "Password123",
+            "restaurant_name": "Manager Restaurant",
+            "restaurant_address": "Manager Address",
+            "restaurant_phone": "70000002",
         },
     )
 
@@ -118,6 +135,9 @@ def manager_user(client, db):
         json={
             "email": "manager@test.com",
             "password": "Password123",
+            "restaurant_name": "Manager Restaurant",
+            "restaurant_address": "Manager Address",
+            "restaurant_phone": "70000002",
         },
     )
 
@@ -135,6 +155,9 @@ def admin_user(client, db):
         json={
             "email": "admin@test.com",
             "password": "Password123",
+            "restaurant_name": "Admin Restaurant",
+            "restaurant_address": "Admin Address",
+            "restaurant_phone": "70000003",
         },
     )
 
@@ -156,6 +179,9 @@ def admin_user(client, db):
         json={
             "email": "admin@test.com",
             "password": "Password123",
+            "restaurant_name": "Admin Restaurant",
+            "restaurant_address": "Admin Address",
+            "restaurant_phone": "70000003",
         },
     )
 

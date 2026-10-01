@@ -24,3 +24,15 @@ class UserLogin(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    role: str
+
+
+class UserUpdate(BaseModel):
+    email: EmailStr | None = None
+    role: str | None = None
+    is_active: bool | None = None

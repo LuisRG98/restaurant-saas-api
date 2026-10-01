@@ -6,9 +6,9 @@ from app.core.exceptions import (
     UnauthorizedException,
 )
 from app.core.security import (
+    create_access_token,
     hash_password,
     verify_password,
-    create_access_token,
 )
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -17,6 +17,7 @@ from app.repositories.user_repository import UserRepository
 class AuthService:
 
     def __init__(self, db: Session):
+        self.db = db
         self.repository = UserRepository(db)
 
     def register_user(
@@ -25,36 +26,42 @@ class AuthService:
         password: str,
     ) -> User:
 
-        existing_user = self.repository.get_by_email(email)
+        existing_user = self.repository.get_by_email(
+            email
+        )
 
         if existing_user is not None:
             raise ConflictException(
                 "A user with this email already exists"
             )
 
-        password_hash = hash_password(password)
-
         user = User(
             email=email,
-            password_hash=password_hash,
+            password_hash=hash_password(password),
             role="STAFF",
             is_active=True,
         )
 
         try:
-            return self.repository.create(user)
+            user = self.repository.create(user)
+
+            self.db.commit()
+            self.db.refresh(user)
+
+            return user
 
         except IntegrityError:
+            self.db.rollback()
+
             raise ConflictException(
                 "A user with this email already exists"
             )
-    
 
     def login_user(
         self,
         email: str,
         password: str,
-    ) -> str:  
+    ) -> str:
 
         user = self.repository.get_by_email(email)
 

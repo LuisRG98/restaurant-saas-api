@@ -10,6 +10,9 @@ def test_register_user(client):
     user_data = {
         "email": "register@example.com",
         "password": "Password123",
+        "restaurant_name": "Test Restaurant",
+        "restaurant_address": "Test Address",
+        "restaurant_phone": "70000000",
     }
 
     response = client.post(
@@ -23,7 +26,7 @@ def test_register_user(client):
 
     assert data["id"] is not None
     assert data["email"] == "register@example.com"
-    assert data["role"] == "STAFF"
+    assert data["role"] == "ADMIN"
     assert data["is_active"] is True
 
     assert "password" not in data
@@ -34,6 +37,9 @@ def test_register_duplicate_email(client):
     user_data = {
         "email": "duplicate@example.com",
         "password": "Password123",
+        "restaurant_name": "Test Restaurant",
+        "restaurant_address": "Test Address",
+        "restaurant_phone": "70000000",
     }
 
     first_response = client.post(
@@ -61,6 +67,9 @@ def test_register_invalid_email(client):
     user_data = {
         "email": "this-is-not-an-email",
         "password": "Password123",
+        "restaurant_name": "Test Restaurant",
+        "restaurant_address": "Test Address",
+        "restaurant_phone": "70000000",
     }
 
     response = client.post(
@@ -78,6 +87,9 @@ def test_login_user(client):
         json={
             "email": "login@example.com",
             "password": "Password123",
+            "restaurant_name": "Test Restaurant",
+            "restaurant_address": "Test Address",
+            "restaurant_phone": "70000000",
         },
     )
 
@@ -88,6 +100,9 @@ def test_login_user(client):
         json={
             "email": "login@example.com",
             "password": "Password123",
+            "restaurant_name": "Test Restaurant",
+            "restaurant_address": "Test Address",
+            "restaurant_phone": "70000000",
         },
     )
 
@@ -106,6 +121,9 @@ def test_login_wrong_password(client):
         json={
             "email": "wrong-password@example.com",
             "password": "Password123",
+            "restaurant_name": "Test Restaurant",
+            "restaurant_address": "Test Address",
+            "restaurant_phone": "70000000",
         },
     )
 

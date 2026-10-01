@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.schemas.user import (
+    TokenResponse,
     UserLogin,
     UserRegister,
     UserResponse,
-    TokenResponse,
 )
 from app.services.auth_service import AuthService
+from app.services.onboarding_service import OnboardingService
 
 
 router = APIRouter(
@@ -26,11 +27,14 @@ def register(
     user_data: UserRegister,
     db: Session = Depends(get_db),
 ):
-    service = AuthService(db)
+    service = OnboardingService(db)
 
-    return service.register_user(
+    return service.register_restaurant_admin(
         email=user_data.email,
         password=user_data.password,
+        restaurant_name=user_data.restaurant_name,
+        restaurant_address=user_data.restaurant_address,
+        restaurant_phone=user_data.restaurant_phone,
     )
 
 

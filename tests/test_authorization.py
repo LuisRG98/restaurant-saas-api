@@ -8,6 +8,9 @@ def register_user(client, email: str):
         json={
             "email": email,
             "password": "Password123",
+            "restaurant_name": f"Restaurant for {email}",
+            "restaurant_address": "Test Address",
+            "restaurant_phone": "123456789",
         },
     )
 
@@ -59,15 +62,15 @@ def create_restaurant(db):
 
     return restaurant
 
-def assign_restaurant(db, user_id: int, restaurant_id: int):
-    user = db.get(User, user_id)
+# def assign_restaurant(db, user_id: int, restaurant_id: int):
+#     user = db.get(User, user_id)
 
-    assert user is not None
+#     assert user is not None
 
-    user.restaurant_id = restaurant_id
+#     user.restaurant_id = restaurant_id
 
-    db.commit()
-    db.refresh(user)
+#     db.commit()
+#     db.refresh(user)
 
 
 def test_staff_can_get_restaurants(
@@ -77,6 +80,12 @@ def test_staff_can_get_restaurants(
     user = register_user(
         client,
         "staff-get@example.com",
+    )
+
+    set_user_role(
+        db,
+        user["id"],
+        "STAFF",
     )
 
     token = login_user(
@@ -99,6 +108,12 @@ def test_staff_cannot_create_restaurant(
     user = register_user(
         client,
         "staff-create@example.com",
+    )
+
+    set_user_role(
+        db,
+        user["id"],
+        "STAFF",
     )
 
     token = login_user(
@@ -128,7 +143,16 @@ def test_staff_cannot_update_restaurant(
         "staff-update@example.com",
     )
 
-    restaurant = create_restaurant(db)
+    set_user_role(
+        db,
+        user["id"],
+        "STAFF",
+    )
+
+    user_db = db.get(User, user["id"])
+
+    assert user_db is not None
+    assert user_db.restaurant_id is not None
 
     token = login_user(
         client,
@@ -136,7 +160,7 @@ def test_staff_cannot_update_restaurant(
     )
 
     response = client.patch(
-        f"/api/v1/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{user_db.restaurant_id}",
         headers=auth_headers(token),
         json={
             "name": "Updated by Staff",
@@ -155,7 +179,16 @@ def test_staff_cannot_delete_restaurant(
         "staff-delete@example.com",
     )
 
-    restaurant = create_restaurant(db)
+    set_user_role(
+        db,
+        user["id"],
+        "STAFF",
+    )
+
+    user_db = db.get(User, user["id"])
+
+    assert user_db is not None
+    assert user_db.restaurant_id is not None
 
     token = login_user(
         client,
@@ -163,7 +196,7 @@ def test_staff_cannot_delete_restaurant(
     )
 
     response = client.delete(
-        f"/api/v1/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{user_db.restaurant_id}",
         headers=auth_headers(token),
     )
 
@@ -222,13 +255,10 @@ def test_manager_can_update_restaurant(
         "MANAGER",
     )
 
-    restaurant = create_restaurant(db)
+    user_db = db.get(User, user["id"])
 
-    assign_restaurant(
-        db,
-        user["id"],
-        restaurant.id,
-    )
+    assert user_db is not None
+    assert user_db.restaurant_id is not None
 
     token = login_user(
         client,
@@ -236,7 +266,7 @@ def test_manager_can_update_restaurant(
     )
 
     response = client.patch(
-        f"/api/v1/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{user_db.restaurant_id}",
         headers=auth_headers(token),
         json={
             "name": "Updated by Manager",
@@ -328,13 +358,10 @@ def test_admin_can_update_restaurant(
         "ADMIN",
     )
 
-    restaurant = create_restaurant(db)
+    user_db = db.get(User, user["id"])
 
-    assign_restaurant(
-        db,
-        user["id"],
-        restaurant.id,
-    )
+    assert user_db is not None
+    assert user_db.restaurant_id is not None
 
     token = login_user(
         client,
@@ -342,7 +369,7 @@ def test_admin_can_update_restaurant(
     )
 
     response = client.patch(
-        f"/api/v1/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{user_db.restaurant_id}",
         headers=auth_headers(token),
         json={
             "name": "Updated by Admin",
@@ -367,13 +394,10 @@ def test_admin_can_delete_restaurant(
         "ADMIN",
     )
 
-    restaurant = create_restaurant(db)
+    user_db = db.get(User, user["id"])
 
-    assign_restaurant(
-        db,
-        user["id"],
-        restaurant.id,
-    )
+    assert user_db is not None
+    assert user_db.restaurant_id is not None
 
     token = login_user(
         client,
@@ -381,7 +405,7 @@ def test_admin_can_delete_restaurant(
     )
 
     response = client.delete(
-        f"/api/v1/restaurants/{restaurant.id}",
+        f"/api/v1/restaurants/{user_db.restaurant_id}",
         headers=auth_headers(token),
     )
 

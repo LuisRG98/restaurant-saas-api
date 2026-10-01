@@ -9,6 +9,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.roles import UserRole
 
 
 class User(Base):
@@ -34,7 +35,7 @@ class User(Base):
     role: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
-        default="STAFF",
+        default=UserRole.STAFF.value,
     )
 
     restaurant_id: Mapped[int | None] = mapped_column(
