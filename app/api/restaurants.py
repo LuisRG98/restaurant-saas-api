@@ -6,6 +6,8 @@ from app.core.dependencies import (
     get_current_user,
     require_role,
 )
+from app.core.roles import UserRole
+
 from app.models.user import User
 from app.schemas.restaurant import (
     RestaurantCreate,
@@ -44,7 +46,10 @@ def create_restaurant(
     restaurant_data: RestaurantCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN", "MANAGER")
+        require_role(
+            "ADMIN",
+            "MANAGER",
+        )
     ),
 ):
 
@@ -80,7 +85,10 @@ def update_restaurant(
     restaurant_data: RestaurantUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN", "MANAGER")
+        require_role(
+            "ADMIN",
+            "MANAGER",
+        )
     ),
 ):
 
@@ -101,7 +109,9 @@ def delete_restaurant(
     restaurant_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_role("ADMIN")
+        require_role(
+            "ADMIN",
+        )
     ),
 ):
 

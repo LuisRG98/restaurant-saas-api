@@ -81,3 +81,28 @@ class UserService:
             raise ConflictException(
                 "A user with this email already exists"
             )
+        
+    def get_user(
+        self,
+        user_id: int,
+        current_user: User,
+    ) -> User:
+
+        if current_user.restaurant_id is None:
+            raise NotFoundException(
+                f"User with id {user_id} not found"
+            )
+
+        user = self.repository.get_by_id(user_id)
+
+        if user is None:
+            raise NotFoundException(
+                f"User with id {user_id} not found"
+            )
+
+        if user.restaurant_id != current_user.restaurant_id:
+            raise NotFoundException(
+                f"User with id {user_id} not found"
+            )
+
+        return user

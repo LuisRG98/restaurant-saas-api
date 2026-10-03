@@ -1,83 +1,71 @@
-from sqlalchemy.exc import IntegrityError
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import (
-    ConflictException,
-    ForbiddenException,
-    NotFoundException,
-)
-from app.core.security import hash_password
+from app.core.database import get_db
+from app.core.dependencies import get_current_user, require_role
 from app.models.user import User
-from app.repositories.user_repository import UserRepository
+from app.schemas.user import UserCreate, UserResponse
+from app.services.user_service import UserService
 
 
-class UserService:
+router = APIRouter(
+    prefix="/api/v1/users",
+    tags=["Users"],
+)
 
-    def __init__(self, db: Session):
-        self.db = db
-        self.repository = UserRepository(db)
 
-    def get_users(
-        self,
-        current_user: User,
-    ) -> list[User]:
+@router.get("/me", response_model=UserResponse)
+def get_current_user_info(
+    current_user: User = Depends(get_current_user),
+):
+    return current_user
 
-        if current_user.restaurant_id is None:
-            return []
 
-        return self.repository.get_all_by_restaurant(
-            current_user.restaurant_id
-        )
+@router.get("/", response_model=list[UserResponse])
+def get_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role("ADMIN", "MANAGER")
+    ),
+):
+    service = UserService(db)
+    return service.get_users(current_user)
 
-    def create_user(
-        self,
-        email: str,
-        password: str,
-        role: str,
-        current_user: User,
-    ) -> User:
 
-        allowed_roles = {"STAFF", "MANAGER"}
+@router.get("/{user_id}", response_model=UserResponse)
+def get_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role("ADMIN", "MANAGER")
+    ),
+):
+    service = UserService(db)
 
-        if role not in allowed_roles:
-            raise ForbiddenException(
-                "You cannot create this role"
-            )
+    return service.get_user(
+        user_id=user_id,
+        current_user=current_user,
+    )
 
-        if role == "MANAGER" and current_user.role != "ADMIN":
-            raise ForbiddenException()
 
-        if current_user.restaurant_id is None:
-            raise ForbiddenException()
+@router.post(
+    "/",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_user(
+    user_data: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role("ADMIN", "MANAGER")
+    ),
+):
+    service = UserService(db)
 
-        existing_user = (
-            self.repository.get_by_email(email)
-        )
+    return service.create_user(
+        email=user_data.email,
+        password=user_data.password,
+        role=user_data.role,
+        current_user=current_user,
+    )
 
-        if existing_user is not None:
-            raise ConflictException(
-                "A user with this email already exists"
-            )
-
-        user = User(
-            email=email,
-            password_hash=hash_password(password),
-            role=role,
-            restaurant_id=current_user.restaurant_id,
-            is_active=True,
-        )
-
-        try:
-            user = self.repository.create(user)
-
-            self.db.commit()
-            self.db.refresh(user)
-
-            return user
-
-        except IntegrityError:
-            self.db.rollback()
-
-            raise ConflictException(
-                "A user with this email already exists"
-            )

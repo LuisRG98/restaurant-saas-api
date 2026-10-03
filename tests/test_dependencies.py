@@ -70,7 +70,7 @@ def test_get_current_user_with_valid_token(
 
 def test_get_current_user_without_token(client):
 
-    response = client.get("/users/me")
+    response = client.get("/api/v1/users/me")
 
     assert response.status_code == 401
 
@@ -78,7 +78,7 @@ def test_get_current_user_without_token(client):
 def test_get_current_user_with_invalid_token(client):
 
     response = client.get(
-        "/users/me",
+        "/api/v1/users/me",
         headers={
             "Authorization": "Bearer invalid-token",
         },

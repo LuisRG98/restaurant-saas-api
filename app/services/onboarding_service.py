@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictException
 from app.core.security import hash_password
+from app.core.roles import UserRole
 from app.models.restaurant import Restaurant
 from app.models.user import User
 from app.repositories.restaurant import RestaurantRepository
@@ -61,7 +62,7 @@ class OnboardingService:
             user = User(
                 email=email,
                 password_hash=hash_password(password),
-                role="ADMIN",
+                role=UserRole.ADMIN.value,
                 restaurant_id=restaurant.id,
                 is_active=True,
             )
