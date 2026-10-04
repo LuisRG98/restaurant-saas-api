@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from app.core.roles import UserRole
 
 
 class UserRegister(BaseModel):
@@ -34,5 +35,5 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
-    role: str | None = None
+    role: UserRole | None = None
     is_active: bool | None = None

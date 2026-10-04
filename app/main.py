@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from app.api.restaurants import router as restaurants_router
 from app.api.auth import router as auth_router
 from app.api.users import router as users_router
+from app.api.categories import router as categories_router
 from app.core.exceptions import AppException
 
 
@@ -27,6 +28,7 @@ async def app_exception_handler(
 app.include_router(restaurants_router)
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(categories_router)
 
 
 @app.get("/api/v1/health")
